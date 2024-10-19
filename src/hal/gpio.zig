@@ -11,33 +11,117 @@ pub const Port = enum(u8) {
     F = 'F',
     G = 'G',
 };
+const portCount: usize = 7;
 
-pub fn enablePort(comptime port: Port) void {
+pub const PinEnum = enum(usize) {
+    Pin0,
+    Pin1,
+    Pin2,
+    Pin3,
+    Pin4,
+    Pin5,
+    Pin6,
+    Pin7,
+    Pin8,
+    Pin9,
+    Pin10,
+    Pin11,
+    Pin12,
+    Pin13,
+    Pin14,
+    Pin15,
+};
+const pinCount: usize = 16;
+
+var pinAllocations = [_]bool{false} ** (portCount * pinCount);
+
+pub const GpioError = error{
+    PinAlreadyAllocated,
+};
+
+pub const Pin = struct {
+    port: Port,
+    pin: PinEnum,
+    mode: GpioMode,
+
+    pub fn init(port: Port, pin: PinEnum, mode: GpioMode) !Pin {
+        const index = pinIndex(port, pin);
+        if (pinAllocations[index]) {
+            return GpioError.PinAlreadyAllocated;
+        }
+
+        pinAllocations[index] = true;
+
+        enablePort(port);
+        setPinMode(port, pin, mode);
+
+        return Pin{
+            .port = port,
+            .pin = pin,
+            .mode = mode,
+        };
+    }
+
+    fn pinIndex(port: Port, pin: PinEnum) usize {
+        return (portCount * @intFromEnum(port) - 'A') + @intFromEnum(pin);
+    }
+
+    pub fn setMode(self: Pin, mode: GpioMode) void {
+        setPinMode(self.port, self.pin, mode);
+    }
+
+    pub fn write(self: Pin, value: bool) void {
+        setPin(self.port, self.pin, value);
+    }
+
+    pub fn deinit(self: Pin) void {
+        const index = pinIndex(self.port, self.pin);
+        pinAllocations[index] = 0;
+    }
+};
+
+pub fn enablePort(port: Port) void {
     var enableRegister = rcc.RCC_AHB2ENR.read();
-    @field(enableRegister, std.fmt.comptimePrint("GPIO{c}EN", .{@intFromEnum(port)})) = true;
+    switch (port) {
+        Port.A => enableRegister.GPIOAEN = true,
+        Port.B => enableRegister.GPIOBEN = true,
+        Port.C => enableRegister.GPIOCEN = true,
+        Port.D => enableRegister.GPIODEN = true,
+        Port.E => enableRegister.GPIOEEN = true,
+        Port.F => enableRegister.GPIOFEN = true,
+        Port.G => enableRegister.GPIOGEN = true,
+    }
     rcc.RCC_AHB2ENR.write(enableRegister);
 }
 
-pub fn setPinMode(comptime port: Port, comptime pin: u9, mode: GpioMode) void {
+pub fn setPinMode(port: Port, pin: PinEnum, mode: GpioMode) void {
     const portReg = getGpioReg(port);
     var moder = portReg.MODER.read();
-    @field(moder, std.fmt.comptimePrint("Mode{}", .{pin})) = mode;
+    moder.setPinMode(pin, mode);
     portReg.MODER.write(moder);
 }
 
-pub fn setPin(comptime port: Port, comptime pin: u9, value: bool) void {
+pub fn setPin(port: Port, pin: PinEnum, value: bool) void {
     const portReg = getGpioReg(port);
     var bsrr = portReg.BSRR.read();
     if (value) {
-        @field(bsrr, std.fmt.comptimePrint("BS{}", .{pin})) = true;
+        bsrr.set(pin);
     } else {
-        @field(bsrr, std.fmt.comptimePrint("BR{}", .{pin})) = true;
+        bsrr.clear(pin);
     }
     portReg.BSRR.write(bsrr);
 }
 
-inline fn getGpioReg(comptime port: Port) *volatile GpioRegister {
-    return @field(gpioRegisters, std.fmt.comptimePrint("{c}", .{@intFromEnum(port)}));
+inline fn getGpioReg(port: Port) *volatile GpioRegister {
+    return switch (port) {
+        Port.A => gpioRegisters.A,
+        Port.B => gpioRegisters.B,
+        Port.C => gpioRegisters.C,
+        Port.D => gpioRegisters.D,
+        Port.E => gpioRegisters.E,
+        Port.F => gpioRegisters.F,
+        Port.G => gpioRegisters.G,
+    };
 }
 
 pub const GpioMode = enum(u2) {
@@ -103,6 +187,27 @@ const MODER = packed struct {
     Mode13: GpioMode,
     Mode14: GpioMode,
     Mode15: GpioMode,
+
+    pub fn setPinMode(self: *MODER, pin: PinEnum, mode: GpioMode) void {
+        switch (pin) {
+            PinEnum.Pin0 => self.Mode0 = mode,
+            PinEnum.Pin1 => self.Mode1 = mode,
+            PinEnum.Pin2 => self.Mode2 = mode,
+            PinEnum.Pin3 => self.Mode3 = mode,
+            PinEnum.Pin4 => self.Mode4 = mode,
+            PinEnum.Pin5 => self.Mode5 = mode,
+            PinEnum.Pin6 => self.Mode6 = mode,
+            PinEnum.Pin7 => self.Mode7 = mode,
+            PinEnum.Pin8 => self.Mode8 = mode,
+            PinEnum.Pin9 => self.Mode9 = mode,
+            PinEnum.Pin10 => self.Mode10 = mode,
+            PinEnum.Pin11 => self.Mode11 = mode,
+            PinEnum.Pin12 => self.Mode12 = mode,
+            PinEnum.Pin13 => self.Mode13 = mode,
+            PinEnum.Pin14 => self.Mode14 = mode,
+            PinEnum.Pin15 => self.Mode15 = mode,
+        }
+    }
 };
 
 const BSRR = packed struct {
@@ -138,4 +243,46 @@ const BSRR = packed struct {
     BR13: bool,
     BR14: bool,
     BR15: bool,
+
+    pub fn set(self: *BSRR, pin: PinEnum) void {
+        switch (pin) {
+            PinEnum.Pin0 => self.BS0 = true,
+            PinEnum.Pin1 => self.BS1 = true,
+            PinEnum.Pin2 => self.BS2 = true,
+            PinEnum.Pin3 => self.BS3 = true,
+            PinEnum.Pin4 => self.BS4 = true,
+            PinEnum.Pin5 => self.BS5 = true,
+            PinEnum.Pin6 => self.BS6 = true,
+            PinEnum.Pin7 => self.BS7 = true,
+            PinEnum.Pin8 => self.BS8 = true,
+            PinEnum.Pin9 => self.BS9 = true,
+            PinEnum.Pin10 => self.BS10 = true,
+            PinEnum.Pin11 => self.BS11 = true,
+            PinEnum.Pin12 => self.BS12 = true,
+            PinEnum.Pin13 => self.BS13 = true,
+            PinEnum.Pin14 => self.BS14 = true,
+            PinEnum.Pin15 => self.BS15 = true,
+        }
+    }
+
+    pub fn clear(self: *BSRR, pin: PinEnum) void {
+        switch (pin) {
+            PinEnum.Pin0 => self.BR0 = true,
+            PinEnum.Pin1 => self.BR1 = true,
+            PinEnum.Pin2 => self.BR2 = true,
+            PinEnum.Pin3 => self.BR3 = true,
+            PinEnum.Pin4 => self.BR4 = true,
+            PinEnum.Pin5 => self.BR5 = true,
+            PinEnum.Pin6 => self.BR6 = true,
+            PinEnum.Pin7 => self.BR7 = true,
+            PinEnum.Pin8 => self.BR8 = true,
+            PinEnum.Pin9 => self.BR9 = true,
+            PinEnum.Pin10 => self.BR10 = true,
+            PinEnum.Pin11 => self.BR11 = true,
+            PinEnum.Pin12 => self.BR12 = true,
+            PinEnum.Pin13 => self.BR13 = true,
+            PinEnum.Pin14 => self.BR14 = true,
+            PinEnum.Pin15 => self.BR15 = true,
+        }
+    }
 };
