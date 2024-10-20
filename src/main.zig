@@ -8,7 +8,7 @@ pub fn main() void {
     while (true) {
         asm volatile ("nop");
         i += 1;
-        if (i >= 1000000) {
+        if (i >= 800000) {
             value = !value;
             led.write(value);
             i = 0;

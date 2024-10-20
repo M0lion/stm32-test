@@ -47,7 +47,7 @@ pub const Pin = struct {
     pub fn init(port: Port, pin: PinEnum, mode: GpioMode) !Pin {
         const index = pinIndex(port, pin);
         if (pinAllocations[index]) {
-            return GpioError.PinAlreadyAllocated;
+            //return GpioError.PinAlreadyAllocated;
         }
 
         pinAllocations[index] = true;
@@ -74,9 +74,16 @@ pub const Pin = struct {
         setPin(self.port, self.pin, value);
     }
 
+    pub fn setAlternate(self: Pin, mode: u4) void {
+        const reg = getGpioReg(self.port);
+        var afrl = reg.AFRL.read();
+        afrl.setMod(self.pin, mode);
+        reg.AFRL.write(afrl);
+    }
+
     pub fn deinit(self: Pin) void {
         const index = pinIndex(self.port, self.pin);
-        pinAllocations[index] = 0;
+        pinAllocations[index] = false;
     }
 };
 
@@ -165,7 +172,7 @@ const GpioRegister = packed struct {
     ODR: u32,
     BSRR: Register(BSRR),
     LCKR: u32,
-    AFRL: u32,
+    AFRL: Register(AFRL),
     AFRH: u32,
     BRR: u32,
 };
@@ -283,6 +290,38 @@ const BSRR = packed struct {
             PinEnum.Pin13 => self.BR13 = true,
             PinEnum.Pin14 => self.BR14 = true,
             PinEnum.Pin15 => self.BR15 = true,
+        }
+    }
+};
+
+const AFRL = packed struct {
+    Pin0: u4,
+    Pin1: u4,
+    Pin2: u4,
+    Pin3: u4,
+    Pin4: u4,
+    Pin5: u4,
+    Pin6: u4,
+    Pin7: u4,
+
+    pub fn setMod(self: *AFRL, pin: PinEnum, mode: u4) void {
+        switch (pin) {
+            PinEnum.Pin0 => self.Pin0 = mode,
+            PinEnum.Pin1 => self.Pin1 = mode,
+            PinEnum.Pin2 => self.Pin2 = mode,
+            PinEnum.Pin3 => self.Pin3 = mode,
+            PinEnum.Pin4 => self.Pin4 = mode,
+            PinEnum.Pin5 => self.Pin5 = mode,
+            PinEnum.Pin6 => self.Pin6 = mode,
+            PinEnum.Pin7 => self.Pin7 = mode,
+            PinEnum.Pin8 => return,
+            PinEnum.Pin9 => return,
+            PinEnum.Pin10 => return,
+            PinEnum.Pin11 => return,
+            PinEnum.Pin12 => return,
+            PinEnum.Pin13 => return,
+            PinEnum.Pin14 => return,
+            PinEnum.Pin15 => return,
         }
     }
 };

@@ -1,5 +1,8 @@
 const vectors = @import("vectors.zig");
 const main = @import("main.zig").main;
+const rcc = @import("hal/rcc.zig");
+const gpio = @import("hal/gpio.zig");
+const uart = @import("hal/uart.zig");
 
 comptime {
     const vectorTable = vectors.VectorTable{
@@ -16,6 +19,13 @@ comptime {
 
 export fn _start() callconv(.C) void {
     meminit();
+
+    const tx = gpio.Pin.init(gpio.Port.A, gpio.PinEnum.Pin2, gpio.GpioMode.Alternate) catch return;
+    const rx = gpio.Pin.init(gpio.Port.A, gpio.PinEnum.Pin3, gpio.GpioMode.Alternate) catch return;
+    const print = uart.Uart.init(tx, rx) catch return;
+    defer print.deinit();
+    print.write("Foo");
+
     main();
     while (true) {
         asm volatile ("nop");

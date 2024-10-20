@@ -24,3 +24,36 @@ const RCC_AHB2ENR_TYPE = packed struct {
     reserved5: u5,
 };
 pub const RCC_AHB2ENR: *volatile Register(RCC_AHB2ENR_TYPE) = @ptrFromInt(RCC_REGISTER_BASE + 0x4c);
+
+const RCC_APB1ENR1_TYPE = packed struct {
+    TIM2EN: bool,
+    TIM3EN: bool,
+    TIM4EN: bool,
+    TIM5EN: bool,
+    TIM6EN: bool,
+    TIM7EN: bool,
+    reserved6: u2,
+    CRSEN: bool,
+    reserved5: u1,
+    RTCAPBEN: bool,
+    WWDGEN: bool,
+    reserved4: u2,
+    SPI2EN: bool,
+    SPI3EN: bool,
+    reserved3: u1,
+    USART2EN: bool,
+    USART3EN: bool,
+    UART4EN: bool,
+    UART5EN: bool,
+    I2C1EN: bool,
+    I2C2EN: bool,
+    USBEN: bool,
+    reserved2: u1,
+    FDCANEN: bool,
+    reserved1: u2,
+    PWREN: bool,
+    reserved0: u1,
+    I2C3EN: bool,
+    LPTIM1EN: bool,
+};
+pub const RCC_APB1ENR1: *volatile Register(RCC_APB1ENR1_TYPE) = @ptrFromInt(RCC_REGISTER_BASE + 0x58);
