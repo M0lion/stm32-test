@@ -19,10 +19,7 @@ pub const Uart = struct {
     tx: gpio.Pin,
     rx: gpio.Pin,
 
-    pub fn init(tx: gpio.Pin, rx: gpio.Pin) !Uart {
-        const led = try gpio.Pin.init(gpio.Port.B, gpio.PinEnum.Pin8, gpio.GpioMode.Output);
-        defer led.deinit();
-
+    pub fn init(uart: EUart, tx: gpio.Pin, rx: gpio.Pin) !Uart {
         var apbEn = rcc.RCC_APB1ENR1.read();
         apbEn.USART2EN = true;
         rcc.RCC_APB1ENR1.write(apbEn);
@@ -32,7 +29,7 @@ pub const Uart = struct {
         rx.setMode(gpio.GpioMode.Alternate);
         rx.setAlternate(0b0111);
 
-        const reg: *volatile UART = @ptrFromInt(0x40004400);
+        const reg = getUart(uart);
 
         var brr = reg.BRR.read();
         brr.BRR = 16000000 / 115200;
@@ -42,39 +39,31 @@ pub const Uart = struct {
         cr1.UE = false;
         reg.CR1.write(cr1);
 
+        // Set word length
         cr1.M1 = false;
         cr1.M0 = false;
         reg.CR1.write(cr1);
 
+        // Set stop bits
         var cr2 = reg.CR2.read();
         cr2.STOP = 0;
         reg.CR2.write(cr2);
 
+        // Disable hardware/software(?) control
         var cr3 = reg.CR3.read();
         cr3.CTSE = false;
         cr3.RTSE = false;
         reg.CR3.write(cr3);
 
+        // Enable uart and tx/rx
         cr1.TE = true;
         cr1.RE = true;
         reg.CR1.write(cr1);
         cr1.UE = true;
         reg.CR1.write(cr1);
 
-        var i: usize = 0;
-        var val = true;
-        led.write(val);
-        while (!reg.ISR.read().TXFNF) {
-            i += 1;
-            if (i >= 100000) {
-                i = 0;
-                led.write(val);
-                val = !val;
-            }
-        }
-
         return Uart{
-            .uart = EUart.Uart2,
+            .uart = uart,
             .tx = tx,
             .rx = rx,
         };

@@ -1,7 +1,7 @@
 const gpio = @import("hal/gpio.zig");
 
 pub fn main() void {
-    const led = gpio.Pin.init(gpio.Port.B, gpio.PinEnum.Pin8, gpio.GpioMode.Output) catch return;
+    const led = gpio.Pin.init(gpio.Port.B, gpio.EPin.Pin8, gpio.GpioMode.Output) catch return;
     defer led.deinit();
     var value = true;
     var i: usize = 0;

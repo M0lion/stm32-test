@@ -13,7 +13,7 @@ pub const Port = enum(u8) {
 };
 const portCount: usize = 7;
 
-pub const PinEnum = enum(usize) {
+pub const EPin = enum(usize) {
     Pin0,
     Pin1,
     Pin2,
@@ -41,10 +41,10 @@ pub const GpioError = error{
 
 pub const Pin = struct {
     port: Port,
-    pin: PinEnum,
+    pin: EPin,
     mode: GpioMode,
 
-    pub fn init(port: Port, pin: PinEnum, mode: GpioMode) !Pin {
+    pub fn init(port: Port, pin: EPin, mode: GpioMode) !Pin {
         const index = pinIndex(port, pin);
         if (pinAllocations[index]) {
             //return GpioError.PinAlreadyAllocated;
@@ -62,7 +62,7 @@ pub const Pin = struct {
         };
     }
 
-    fn pinIndex(port: Port, pin: PinEnum) usize {
+    fn pinIndex(port: Port, pin: EPin) usize {
         return (portCount * @intFromEnum(port) - 'A') + @intFromEnum(pin);
     }
 
@@ -76,9 +76,88 @@ pub const Pin = struct {
 
     pub fn setAlternate(self: Pin, mode: u4) void {
         const reg = getGpioReg(self.port);
-        var afrl = reg.AFRL.read();
-        afrl.setMod(self.pin, mode);
-        reg.AFRL.write(afrl);
+        switch (self.pin) {
+            EPin.Pin0 => {
+                var val = reg.AFRL.read();
+                val.Pin0 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin1 => {
+                var val = reg.AFRL.read();
+                val.Pin1 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin2 => {
+                var val = reg.AFRL.read();
+                val.Pin2 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin3 => {
+                var val = reg.AFRL.read();
+                val.Pin3 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin4 => {
+                var val = reg.AFRL.read();
+                val.Pin4 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin5 => {
+                var val = reg.AFRL.read();
+                val.Pin5 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin6 => {
+                var val = reg.AFRL.read();
+                val.Pin6 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin7 => {
+                var val = reg.AFRL.read();
+                val.Pin7 = mode;
+                reg.AFRL.write(val);
+            },
+            EPin.Pin8 => {
+                var val = reg.AFRH.read();
+                val.Pin8 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin9 => {
+                var val = reg.AFRH.read();
+                val.Pin9 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin10 => {
+                var val = reg.AFRH.read();
+                val.Pin10 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin11 => {
+                var val = reg.AFRH.read();
+                val.Pin11 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin12 => {
+                var val = reg.AFRH.read();
+                val.Pin12 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin13 => {
+                var val = reg.AFRH.read();
+                val.Pin13 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin14 => {
+                var val = reg.AFRH.read();
+                val.Pin14 = mode;
+                reg.AFRH.write(val);
+            },
+            EPin.Pin15 => {
+                var val = reg.AFRH.read();
+                val.Pin15 = mode;
+                reg.AFRH.write(val);
+            },
+        }
     }
 
     pub fn deinit(self: Pin) void {
@@ -101,14 +180,14 @@ pub fn enablePort(port: Port) void {
     rcc.RCC_AHB2ENR.write(enableRegister);
 }
 
-pub fn setPinMode(port: Port, pin: PinEnum, mode: GpioMode) void {
+pub fn setPinMode(port: Port, pin: EPin, mode: GpioMode) void {
     const portReg = getGpioReg(port);
     var moder = portReg.MODER.read();
     moder.setPinMode(pin, mode);
     portReg.MODER.write(moder);
 }
 
-pub fn setPin(port: Port, pin: PinEnum, value: bool) void {
+pub fn setPin(port: Port, pin: EPin, value: bool) void {
     const portReg = getGpioReg(port);
     var bsrr = portReg.BSRR.read();
     if (value) {
@@ -173,7 +252,7 @@ const GpioRegister = packed struct {
     BSRR: Register(BSRR),
     LCKR: u32,
     AFRL: Register(AFRL),
-    AFRH: u32,
+    AFRH: Register(AFRH),
     BRR: u32,
 };
 
@@ -195,24 +274,24 @@ const MODER = packed struct {
     Mode14: GpioMode,
     Mode15: GpioMode,
 
-    pub fn setPinMode(self: *MODER, pin: PinEnum, mode: GpioMode) void {
+    pub fn setPinMode(self: *MODER, pin: EPin, mode: GpioMode) void {
         switch (pin) {
-            PinEnum.Pin0 => self.Mode0 = mode,
-            PinEnum.Pin1 => self.Mode1 = mode,
-            PinEnum.Pin2 => self.Mode2 = mode,
-            PinEnum.Pin3 => self.Mode3 = mode,
-            PinEnum.Pin4 => self.Mode4 = mode,
-            PinEnum.Pin5 => self.Mode5 = mode,
-            PinEnum.Pin6 => self.Mode6 = mode,
-            PinEnum.Pin7 => self.Mode7 = mode,
-            PinEnum.Pin8 => self.Mode8 = mode,
-            PinEnum.Pin9 => self.Mode9 = mode,
-            PinEnum.Pin10 => self.Mode10 = mode,
-            PinEnum.Pin11 => self.Mode11 = mode,
-            PinEnum.Pin12 => self.Mode12 = mode,
-            PinEnum.Pin13 => self.Mode13 = mode,
-            PinEnum.Pin14 => self.Mode14 = mode,
-            PinEnum.Pin15 => self.Mode15 = mode,
+            EPin.Pin0 => self.Mode0 = mode,
+            EPin.Pin1 => self.Mode1 = mode,
+            EPin.Pin2 => self.Mode2 = mode,
+            EPin.Pin3 => self.Mode3 = mode,
+            EPin.Pin4 => self.Mode4 = mode,
+            EPin.Pin5 => self.Mode5 = mode,
+            EPin.Pin6 => self.Mode6 = mode,
+            EPin.Pin7 => self.Mode7 = mode,
+            EPin.Pin8 => self.Mode8 = mode,
+            EPin.Pin9 => self.Mode9 = mode,
+            EPin.Pin10 => self.Mode10 = mode,
+            EPin.Pin11 => self.Mode11 = mode,
+            EPin.Pin12 => self.Mode12 = mode,
+            EPin.Pin13 => self.Mode13 = mode,
+            EPin.Pin14 => self.Mode14 = mode,
+            EPin.Pin15 => self.Mode15 = mode,
         }
     }
 };
@@ -251,45 +330,45 @@ const BSRR = packed struct {
     BR14: bool,
     BR15: bool,
 
-    pub fn set(self: *BSRR, pin: PinEnum) void {
+    pub fn set(self: *BSRR, pin: EPin) void {
         switch (pin) {
-            PinEnum.Pin0 => self.BS0 = true,
-            PinEnum.Pin1 => self.BS1 = true,
-            PinEnum.Pin2 => self.BS2 = true,
-            PinEnum.Pin3 => self.BS3 = true,
-            PinEnum.Pin4 => self.BS4 = true,
-            PinEnum.Pin5 => self.BS5 = true,
-            PinEnum.Pin6 => self.BS6 = true,
-            PinEnum.Pin7 => self.BS7 = true,
-            PinEnum.Pin8 => self.BS8 = true,
-            PinEnum.Pin9 => self.BS9 = true,
-            PinEnum.Pin10 => self.BS10 = true,
-            PinEnum.Pin11 => self.BS11 = true,
-            PinEnum.Pin12 => self.BS12 = true,
-            PinEnum.Pin13 => self.BS13 = true,
-            PinEnum.Pin14 => self.BS14 = true,
-            PinEnum.Pin15 => self.BS15 = true,
+            EPin.Pin0 => self.BS0 = true,
+            EPin.Pin1 => self.BS1 = true,
+            EPin.Pin2 => self.BS2 = true,
+            EPin.Pin3 => self.BS3 = true,
+            EPin.Pin4 => self.BS4 = true,
+            EPin.Pin5 => self.BS5 = true,
+            EPin.Pin6 => self.BS6 = true,
+            EPin.Pin7 => self.BS7 = true,
+            EPin.Pin8 => self.BS8 = true,
+            EPin.Pin9 => self.BS9 = true,
+            EPin.Pin10 => self.BS10 = true,
+            EPin.Pin11 => self.BS11 = true,
+            EPin.Pin12 => self.BS12 = true,
+            EPin.Pin13 => self.BS13 = true,
+            EPin.Pin14 => self.BS14 = true,
+            EPin.Pin15 => self.BS15 = true,
         }
     }
 
-    pub fn clear(self: *BSRR, pin: PinEnum) void {
+    pub fn clear(self: *BSRR, pin: EPin) void {
         switch (pin) {
-            PinEnum.Pin0 => self.BR0 = true,
-            PinEnum.Pin1 => self.BR1 = true,
-            PinEnum.Pin2 => self.BR2 = true,
-            PinEnum.Pin3 => self.BR3 = true,
-            PinEnum.Pin4 => self.BR4 = true,
-            PinEnum.Pin5 => self.BR5 = true,
-            PinEnum.Pin6 => self.BR6 = true,
-            PinEnum.Pin7 => self.BR7 = true,
-            PinEnum.Pin8 => self.BR8 = true,
-            PinEnum.Pin9 => self.BR9 = true,
-            PinEnum.Pin10 => self.BR10 = true,
-            PinEnum.Pin11 => self.BR11 = true,
-            PinEnum.Pin12 => self.BR12 = true,
-            PinEnum.Pin13 => self.BR13 = true,
-            PinEnum.Pin14 => self.BR14 = true,
-            PinEnum.Pin15 => self.BR15 = true,
+            EPin.Pin0 => self.BR0 = true,
+            EPin.Pin1 => self.BR1 = true,
+            EPin.Pin2 => self.BR2 = true,
+            EPin.Pin3 => self.BR3 = true,
+            EPin.Pin4 => self.BR4 = true,
+            EPin.Pin5 => self.BR5 = true,
+            EPin.Pin6 => self.BR6 = true,
+            EPin.Pin7 => self.BR7 = true,
+            EPin.Pin8 => self.BR8 = true,
+            EPin.Pin9 => self.BR9 = true,
+            EPin.Pin10 => self.BR10 = true,
+            EPin.Pin11 => self.BR11 = true,
+            EPin.Pin12 => self.BR12 = true,
+            EPin.Pin13 => self.BR13 = true,
+            EPin.Pin14 => self.BR14 = true,
+            EPin.Pin15 => self.BR15 = true,
         }
     }
 };
@@ -303,25 +382,15 @@ const AFRL = packed struct {
     Pin5: u4,
     Pin6: u4,
     Pin7: u4,
+};
 
-    pub fn setMod(self: *AFRL, pin: PinEnum, mode: u4) void {
-        switch (pin) {
-            PinEnum.Pin0 => self.Pin0 = mode,
-            PinEnum.Pin1 => self.Pin1 = mode,
-            PinEnum.Pin2 => self.Pin2 = mode,
-            PinEnum.Pin3 => self.Pin3 = mode,
-            PinEnum.Pin4 => self.Pin4 = mode,
-            PinEnum.Pin5 => self.Pin5 = mode,
-            PinEnum.Pin6 => self.Pin6 = mode,
-            PinEnum.Pin7 => self.Pin7 = mode,
-            PinEnum.Pin8 => return,
-            PinEnum.Pin9 => return,
-            PinEnum.Pin10 => return,
-            PinEnum.Pin11 => return,
-            PinEnum.Pin12 => return,
-            PinEnum.Pin13 => return,
-            PinEnum.Pin14 => return,
-            PinEnum.Pin15 => return,
-        }
-    }
+const AFRH = packed struct {
+    Pin8: u4,
+    Pin9: u4,
+    Pin10: u4,
+    Pin11: u4,
+    Pin12: u4,
+    Pin13: u4,
+    Pin14: u4,
+    Pin15: u4,
 };
